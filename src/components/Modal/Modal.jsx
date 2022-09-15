@@ -1,34 +1,32 @@
-import { Component } from "react";
+import { useEffect } from "react";
 import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 import PropTypes from 'prop-types';
 
-export class Modal extends Component {
+export function Modal({ toggleModal, image }) {
 
-    componentDidMount = () => {
-        window.addEventListener('keydown', this.keyDownOperator);
-    };
-    
-    componentWillUnmount = () => {
-        window.removeEventListener('keydown', this.keyDownOperator);
-    };
-
-    keyDownOperator = (event) => {
+    const keyDownOperator = (event) => {
         if (event.code === 'Escape') {
-            this.props.toggleModal(event);
+            toggleModal(event);
         };
     };
 
-    render() {
-        return createPortal(
-            <div className={styles.overlay} onClick={this.props.toggleModal}>
-                <div className={styles.modal}>
-                    <img src={this.props.image} alt="choosed depiction" />
-                </div>
-            </div>,
-            document.getElementById('portal')
-        );
-    };
+    useEffect(() => {
+        window.addEventListener('keydown', keyDownOperator);
+        return () => {
+            window.removeEventListener('keydown', keyDownOperator);
+        };
+        // eslint-disable-next-line
+    }, []);
+
+    return createPortal(
+        <div className={styles.overlay} onClick={toggleModal}>
+            <div className={styles.modal}>
+                <img src={image} alt="choosed depiction" />
+            </div>
+        </div>,
+        document.getElementById('portal')
+    );
 };
 
 Modal.propTypes = {

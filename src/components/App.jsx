@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
@@ -8,75 +8,69 @@ import { requesterAPI } from './services/requesterAPI';
 import noFound from './images/no-found.png';
 import styles from './App.module.css';
 
-class App extends Component {
-  state = {
-    serachWord: '',
-    page: 1,
-    images: [],
-    largeImage: '',
-    isEndOfGallery: false,
-    isModalOpen: false,
-    isLoading: false,
-  };
+function App() {
+  const [serachWord, setSerachWord] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [largeImage, setLargeImage] = useState('');
+  const [isEndOfGallery, setIsEndOfGallery] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [getPhotosTrigger, setGetPhotosTrigger] = useState(false);
 
-  componentDidMount() {
-    this.getPhotos();
-  };
+  useEffect(() => {
+    getPhotos();
+    // eslint-disable-next-line
+  }, [getPhotosTrigger]);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { serachWord, page } = this.state;
-    if (prevState.page !== page || prevState.serachWord !== serachWord) {
-          this.getPhotos();
-    }
-  };
-
-  onSubmit = (event) => {
+  const onSubmit = (event) => {
     event.preventDefault();
-    this.setState({ serachWord: event.target[1].value, page: 1, images: [], isEndOfGallery: false });
+    setSerachWord(event.target[1].value);
+    setPage(1);
+    setImages([]);
+    setIsEndOfGallery(false);
+    setGetPhotosTrigger(prev => !prev);
     event.target.reset();
   };
 
-  pageOperator = () => {
-    this.setState(prevState => { return { page: prevState.page + 1 } });
+  const pageOperator = () => {
+    setPage(prev => prev + 1)
+    setGetPhotosTrigger(prev => !prev);
   };
 
-  getPhotos = async () => {
-    this.setState({ isLoading: true });
+  const getPhotos = async () => {
+    setIsLoading(true);
     try {
-      requesterAPI(this.state.serachWord, this.state.page)
+      requesterAPI(serachWord, page)
         .then(response => {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...response.hits],
-            isEndOfGallery: prevState.images.length + response.hits.length === response.totalHits
-          }));
+          setIsEndOfGallery(images.length + response.hits.length === response.totalHits);
+          setImages(prev => [...prev, ...response.hits]);
         });
     } catch (error) {
       console.log(error);
     } finally {
-      this.setState({ isLoading: false });
+      setIsLoading(false);
     };
   };
 
-  toggleModal = event => {
+  const toggleModal = event => {
     if (event.target === event.currentTarget || event.code ) {
-      const imgPath = event.target.id ? this.state.images[event.target.id].largeImageURL : '';
-      this.setState(prevValue => ({ isModalOpen: !prevValue.isModalOpen, largeImage: imgPath }));
+      const imgPath = event.target.id ? images[event.target.id].largeImageURL : '';
+      setIsModalOpen(prev => !prev);
+      setLargeImage(imgPath);
     };
   };
 
-  render() {
-    const { images, largeImage, isModalOpen, isLoading, isEndOfGallery } = this.state;
-    return (
-      <div className={styles.app}>
-        <Searchbar onSubmit={this.onSubmit} />
-        {images.length > 0 && <ImageGallery images={images} toggleModal={this.toggleModal} />}
-        {!images.length > 0 && <img src={noFound} alt="depiction no found" style={{margin: "auto", maxWidth: "600px"}} />}
-        {images.length > 0 && !isEndOfGallery && <Button pageOperator={this.pageOperator} />}
-        {isModalOpen && <Modal image={largeImage} toggleModal={this.toggleModal} />}
-        {isLoading && <Loader />}
-      </div>
-    );
-  };
+  return (
+    <div className={styles.app}>
+      <Searchbar onSubmit={onSubmit} />
+      {images.length > 0 && <ImageGallery images={images} toggleModal={toggleModal} />}
+      {!images.length > 0 && <img src={noFound} alt="depiction no found" style={{margin: "auto", maxWidth: "600px"}} />}
+      {images.length > 0 && !isEndOfGallery && <Button pageOperator={pageOperator} />}
+      {isModalOpen && <Modal image={largeImage} toggleModal={toggleModal} />}
+      {isLoading && <Loader />}
+    </div>
+  );
 };
 
 export default App;
