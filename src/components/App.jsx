@@ -9,39 +9,36 @@ import noFound from './images/no-found.png';
 import styles from './App.module.css';
 
 function App() {
-  const [serachWord, setSerachWord] = useState('');
+  const [serachWord, setSerachWord] = useState(['']);
   const [page, setPage] = useState(1);
   const [images, setImages] = useState([]);
   const [largeImage, setLargeImage] = useState('');
   const [isEndOfGallery, setIsEndOfGallery] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [getPhotosTrigger, setGetPhotosTrigger] = useState(false);
 
   useEffect(() => {
     getPhotos();
     // eslint-disable-next-line
-  }, [getPhotosTrigger]);
+  }, [page, serachWord]);
 
   const onSubmit = (event) => {
     event.preventDefault();
-    setSerachWord(event.target[1].value);
+    setSerachWord([event.target[1].value]);
     setPage(1);
     setImages([]);
     setIsEndOfGallery(false);
-    setGetPhotosTrigger(prev => !prev);
     event.target.reset();
   };
 
   const pageOperator = () => {
     setPage(prev => prev + 1)
-    setGetPhotosTrigger(prev => !prev);
   };
 
   const getPhotos = async () => {
     setIsLoading(true);
     try {
-      requesterAPI(serachWord, page)
+      requesterAPI(serachWord[0], page)
         .then(response => {
           setIsEndOfGallery(images.length + response.hits.length === response.totalHits);
           setImages(prev => [...prev, ...response.hits]);
